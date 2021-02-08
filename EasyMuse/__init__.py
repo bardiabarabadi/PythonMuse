@@ -1,0 +1,3 @@
+
+class Muse(object):
+    pass
