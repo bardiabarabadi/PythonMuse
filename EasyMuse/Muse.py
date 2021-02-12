@@ -75,31 +75,31 @@ class Muse:
         self.loop.run_until_complete(self.muse.connect(timeout=30))
 
         print("connection was successful")
-        _ = self.pull_acc()
-        _ = self.pull_eeg()
-        _ = self.pull_gyro()
-        _ = self.pull_ppg()
+        _ = self.pullACC()
+        _ = self.pullEEG()
+        _ = self.pullGyro()
+        _ = self.pullPPG()
         return
 
-    def pull_eeg(self):
+    def pullEEG(self):
         self.loop.run_until_complete(self.muse.start())
         to_return = self.eeg_buff
         self.eeg_buff = []
         return to_return
 
-    def pull_ppg(self):
+    def pullPPG(self):
         self.loop.run_until_complete(self.muse.start())
         to_return = self.ppg_buff
         self.ppg_buff = []
         return to_return
 
-    def pull_acc(self):
+    def pullACC(self):
         self.loop.run_until_complete(self.muse.start())
         to_return = self.acc_buff
         self.acc_buff = []
         return to_return
 
-    def pull_gyro(self):
+    def pullGyro(self):
         self.loop.run_until_complete(self.muse.start())
         to_return = self.gyro_buff
         self.gyro_buff = []
@@ -147,7 +147,7 @@ class Muse:
         if len(a) != 1:
             self.recv_command = a
 
-    def pull_battery(self):
+    def pullBattery(self):
         self.recv_command = None
         for i in range(10):
             self.loop.run_until_complete(self.muse.ask_control())
