@@ -43,7 +43,7 @@ class Muse:
             self.target_name = target_name
         elif self.target_name is None:
             print("No target name specified")
-            return
+            return None
 
         mf = MuseFinder()
         self.loop.run_until_complete(mf.search_for_muses(timeout=self.timeout))
@@ -51,7 +51,7 @@ class Muse:
 
         if len(self.all_muses) < 1:
             print("No MUSEs found, please try again or increase the timeout")
-            return
+            return None
         else:
             found = False
             for d in self.all_muses:
@@ -61,7 +61,7 @@ class Muse:
                     found = True
             if found is False:
                 print("Couldn't find target, + " + str(self.target_name) + ". Try again or increase the timeout.")
-                return
+                return None
 
         # Connecting
         push_eeg = partial(self._push, offset=EEG_PORT_OFFSET)
@@ -79,7 +79,7 @@ class Muse:
         _ = self.pullEEG()
         _ = self.pullGyro()
         _ = self.pullPPG()
-        return
+        return self
 
     def pullEEG(self):
         self.loop.run_until_complete(self.muse.start())
