@@ -50,6 +50,7 @@ def animateEEG(i):
     ax3.set_ylim(-1000, 1000)
     ax4.set_ylim(-1000, 1000)
 
+
 def animateFFT(i):
     global plotX
     global plotBuffer
@@ -61,23 +62,39 @@ def animateFFT(i):
     ax3.clear()
     ax4.clear()
 
-    ax1.bar(np.arange(1,fftCoefficients.shape[0]+1,1), fftCoefficients[:, 0])
-    ax2.bar(np.arange(1,fftCoefficients.shape[0]+1,1), fftCoefficients[:, 1])
-    ax3.bar(np.arange(1,fftCoefficients.shape[0]+1,1), fftCoefficients[:, 2])
-    ax4.bar(np.arange(1,fftCoefficients.shape[0]+1,1), fftCoefficients[:, 3])
+    ax1.bar(np.arange(1, fftCoefficients.shape[0] + 1, 1), fftCoefficients[:, 0])
+    ax2.bar(np.arange(1, fftCoefficients.shape[0] + 1, 1), fftCoefficients[:, 1])
+    ax3.bar(np.arange(1, fftCoefficients.shape[0] + 1, 1), fftCoefficients[:, 2])
+    ax4.bar(np.arange(1, fftCoefficients.shape[0] + 1, 1), fftCoefficients[:, 3])
 
     ax1.set_ylim(0, 10)
     ax2.set_ylim(0, 10)
     ax3.set_ylim(0, 10)
     ax4.set_ylim(0, 10)
 
-print('hi')
+
+def animateWavelet(i):
+    global plotX
+    global plotBuffer
+
+    updateBuffer()
+    wavelet = doMuseWavelet(toWavelet=plotBuffer, sRate=sampleRate)
+    ax1.clear()
+    ax2.clear()
+    ax3.clear()
+    ax4.clear()
+
+    ax1.imshow(wavelet[0, :, :], aspect=plotLength/60, origin='lower')
+    ax2.imshow(wavelet[1, :, :], aspect=plotLength/60, origin='lower')
+    ax3.imshow(wavelet[2, :, :], aspect=plotLength/60, origin='lower')
+    ax4.imshow(wavelet[3, :, :], aspect=plotLength/60, origin='lower')
+
 
 museName = 'Muse-C3DD'
 
-plotWhat = 2
+plotWhat = 3
 plotLength = 512  # denominated in samples
-samplingBufferLen = 500  # number of samples to be held between two plot updates
+samplingBufferLen = 512  # number of samples to be held between two plot updates
 plotUpdateInterval = 100  # in milliseconds
 
 sampleRate = 256
@@ -117,7 +134,6 @@ ax3 = fig.add_subplot(2, 2, 3)
 ax4 = fig.add_subplot(2, 2, 4)
 
 if plotWhat == 1:
-
     plotBuffer = np.zeros([plotLength, 4])
     plotX = np.zeros([plotLength, 1])
 
@@ -126,10 +142,17 @@ if plotWhat == 1:
     plt.show()
 
 if plotWhat == 2:
-
     plotBuffer = np.zeros([plotLength, 4])
     plotX = np.zeros([plotLength, 1])
 
     ani = animation.FuncAnimation(fig, animateFFT, interval=plotUpdateInterval)
+
+    plt.show()
+
+if plotWhat == 3:
+    plotBuffer = np.zeros([plotLength, 4])
+    plotX = np.zeros([plotLength, 1])
+
+    ani = animation.FuncAnimation(fig, animateWavelet, interval=plotUpdateInterval)
 
     plt.show()
