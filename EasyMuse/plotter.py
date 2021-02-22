@@ -6,6 +6,8 @@ import matplotlib;
 
 matplotlib.use("TkAgg")
 
+from EasyMuse.biQuadFilters import *
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -14,15 +16,19 @@ import matplotlib.animation as animation
 def updateBuffer():
     global plotX
     global plotBuffer
+    global previousSamples, previousResults
     eegData = muse.pullEEG()  # Only the first four elements of every list member is valuable
-    if eegData.__len__() >= samplingBufferLen:
+    if eegData.__len__() > samplingBufferLen:
         print("Warning: Missing samples. Increase the sampling buffer length or increase the plot update frequency")
     eegData = np.array(eegData)
     eegTimeStamp = eegData[:, 5]
     eegData = eegData[:, 0:4]
-    # Here is where the filtering happens
-    filteredEEG = eegData  # TODO
 
+    # Filtering
+    eegData_t, previousSamples, previousResults = applyBiQuad(eegData.T, whichFilters, highPass, lowPass, notchFilter,
+                                                              previousSamples, previousResults)
+
+    eegData = eegData_t.T
     plotX = np.append(plotX, eegTimeStamp)
     plotBuffer = np.append(plotBuffer, eegData, axis=0)
 
@@ -84,31 +90,42 @@ def animateWavelet(i):
     ax3.clear()
     ax4.clear()
 
-    ax1.imshow(wavelet[0, :, :], aspect=plotLength/60, origin='lower')
-    ax2.imshow(wavelet[1, :, :], aspect=plotLength/60, origin='lower')
-    ax3.imshow(wavelet[2, :, :], aspect=plotLength/60, origin='lower')
-    ax4.imshow(wavelet[3, :, :], aspect=plotLength/60, origin='lower')
+    ax1.imshow(wavelet[0, :, :], aspect=plotLength / 60, origin='lower')
+    ax2.imshow(wavelet[1, :, :], aspect=plotLength / 60, origin='lower')
+    ax3.imshow(wavelet[2, :, :], aspect=plotLength / 60, origin='lower')
+    ax4.imshow(wavelet[3, :, :], aspect=plotLength / 60, origin='lower')
 
 
-museName = 'Muse-C3DD'
+def close_handle(evt):
+    print("disconnecting Muse")
+    muse.disconnect()
+
+
+# museName = 'Muse-C3DD'
+museName = 'Muse-3BEA'
 
 plotWhat = 3
 plotLength = 512  # denominated in samples
-samplingBufferLen = 512  # number of samples to be held between two plot updates
-plotUpdateInterval = 100  # in milliseconds
+samplingBufferLen = 12  # number of samples to be held between two plot updates
+plotUpdateInterval = 4  # in milliseconds
 
 sampleRate = 256
 bandwidth = 0.707
 whichFilters = [1, 0, 1]
 
+# Create empty arrays
+global previousSamples, previousResults
+previousSamples = np.zeros([4, 2, 3])
+previousResults = np.zeros([4, 2, 3])
+
 highFreq = 0.1
-# highPassFilter = biQuadHighPass(highFreq, sampleRate, bandwidth)
+highPass = biQuadHighPass(highFreq, sampleRate, bandwidth)
 
 lowFreq = 30
-# lowPassFilter = biQuadLowPass(lowFreq, sampleRate, bandwidth)
+lowPass = biQuadLowPass(lowFreq, sampleRate, bandwidth)
 
 notchFreq = 60
-# notchFilter = biQuadNotch(notchFreq, sampleRate, bandwidth)
+notchFilter = biQuadNotch(notchFreq, sampleRate, bandwidth)
 
 muse = Muse(target_name=museName, max_buff_len=samplingBufferLen)
 for i in range(10):
@@ -128,6 +145,7 @@ global plotBuffer
 global plotX
 
 fig = plt.figure()
+fig.canvas.mpl_connect('close_event', close_handle)
 ax1 = fig.add_subplot(2, 2, 1)
 ax2 = fig.add_subplot(2, 2, 2)
 ax3 = fig.add_subplot(2, 2, 3)
@@ -153,6 +171,6 @@ if plotWhat == 3:
     plotBuffer = np.zeros([plotLength, 4])
     plotX = np.zeros([plotLength, 1])
 
-    ani = animation.FuncAnimation(fig, animateWavelet, interval=plotUpdateInterval)
+    ani = animation.FuncAnimation(fig, animateWavelet, interval=plotUpdateInterval, )
 
     plt.show()

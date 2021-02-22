@@ -268,7 +268,7 @@ class MuseBLE(object):
             self._init_sample_control()
 
     def _handle_eeg(self, sender, packet):
-        index = int((sender - 32) / 3)
+        index = int((sender - 31) / 3)
         timestamp = time()
         tm, d = self._unpack_eeg_channel(packet)
 
@@ -277,9 +277,9 @@ class MuseBLE(object):
 
         self.data_eeg[index] = d
         self.timestamps_eeg[index] = timestamp
-
+        # print ("sender is: " + str(sender))
         # Check if this is the last data in the sequence
-        if index == 1:
+        if sender == 34:
             if tm != self.last_tm_eeg + 1:
                 pass
                 # print("Missing sample %d : %d" % (tm, self.last_tm_eeg))
