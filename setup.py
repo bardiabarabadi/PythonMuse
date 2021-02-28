@@ -27,7 +27,7 @@ long_description = get_long_description()
 
 setup(
     name="EasyMuse",
-    version="0.0.4",
+    version="0.0.6",
     description="A Python library for connecting and communicate with MUSE headbands. "
                 "Uses Bleak as the underlying Bluetooth interface.",
     keywords="muse lsl eeg ble neuroscience matlab UDP",

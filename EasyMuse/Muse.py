@@ -71,9 +71,10 @@ class Muse:
         self.muse = MuseBLE(client=self.target_muse, callback_control=self._command_callback,
                             callback_acc=push_acc, callback_eeg=push_eeg, callback_gyro=push_gyro,
                             callback_ppg=push_ppg)
-
-        self.loop.run_until_complete(self.muse.connect(timeout=30))
-
+        try:
+            self.loop.run_until_complete(self.muse.connect(timeout=30))
+        except asyncio.exceptions.TimeoutError:
+            print ("30 second time out reached, cannot connect to MUSE. Ty again...")
         print("connection was successful")
         _ = self.pullACC()
         _ = self.pullEEG()

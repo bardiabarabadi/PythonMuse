@@ -104,10 +104,10 @@ def close_handle(evt):
 # museName = 'Muse-C3DD'
 museName = 'Muse-3BEA'
 
-plotWhat = 3
+plotWhat = 1
 plotLength = 512  # denominated in samples
-samplingBufferLen = 12  # number of samples to be held between two plot updates
-plotUpdateInterval = 4  # in milliseconds
+samplingBufferLen = 512  # number of samples to be held between two plot updates
+plotUpdateInterval = 100  # in milliseconds
 
 sampleRate = 256
 bandwidth = 0.707
@@ -129,7 +129,7 @@ notchFilter = biQuadNotch(notchFreq, sampleRate, bandwidth)
 
 muse = Muse(target_name=museName, max_buff_len=samplingBufferLen)
 for i in range(10):
-    print("Attempting to connect to " + museName + ". Attempt " + str(i + 1) + " of 10...")
+    print("Attempting to find to " + museName + ". Attempt " + str(i + 1) + " of 10...")
     r = muse.connect()
     if r is not None:
         break
