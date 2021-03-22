@@ -74,7 +74,8 @@ class Muse:
         try:
             self.loop.run_until_complete(self.muse.connect(timeout=30))
         except asyncio.exceptions.TimeoutError:
-            print ("30 second time out reached, cannot connect to MUSE. Ty again...")
+            print ("30 second time out reached, cannot connect to MUSE! Ty again...")
+            return None
         print("connection was successful")
         _ = self.pullACC()
         _ = self.pullEEG()

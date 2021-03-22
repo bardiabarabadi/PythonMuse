@@ -17,11 +17,15 @@ def updateBuffer():
     global plotX
     global plotBuffer
     global previousSamples, previousResults
-    eegData = muse.pullEEG()  # Only the first four elements of every list member is valuable
+    # eegData = muse.pullEEG()  # Only the first four elements of every list member is valuable
+    eegData = np.random.rand(16,6)*500
+    print (plotX.shape)
+
+    eegData[:,5] = np.linspace(start=np.squeeze(plotX)[511], stop=np.squeeze(plotX)[511]+15, num=16)
+    print (plotX.shape)
     if eegData.__len__() > samplingBufferLen:
         print("Warning: Missing samples. Increase the sampling buffer length or increase the plot update frequency")
     eegData = np.array(eegData)
-    print (eegData.shape)
     eegTimeStamp = eegData[:, 5]
     eegData = eegData[:, 0:4]
 
@@ -99,7 +103,7 @@ def animateWavelet(i):
 
 def close_handle(evt):
     print("disconnecting Muse")
-    muse.disconnect()
+    # muse.disconnect()
 
 
 # museName = 'Muse-C3DD'
@@ -119,27 +123,27 @@ global previousSamples, previousResults
 previousSamples = np.zeros([4, 2, 3])
 previousResults = np.zeros([4, 2, 3])
 
-highFreq = 0.1
+highFreq = 100
 highPass = biQuadHighPass(highFreq, sampleRate, bandwidth)
 
-lowFreq = 30
+lowFreq = 10
 lowPass = biQuadLowPass(lowFreq, sampleRate, bandwidth)
 
 notchFreq = 60
 notchFilter = biQuadNotch(notchFreq, sampleRate, bandwidth)
 
-muse = Muse(target_name=museName, max_buff_len=samplingBufferLen)
-for i in range(10):
-    print("Attempting to find to " + museName + ". Attempt " + str(i + 1) + " of 10...")
-    r = muse.connect()
-    if r is not None:
-        break
-    else:
-        print("No MUSE found, trying again...")
-        continue
+# muse = Muse(target_name=museName, max_buff_len=samplingBufferLen)
+# for i in range(10):
+#     print("Attempting to find to " + museName + ". Attempt " + str(i + 1) + " of 10...")
+#     r = muse.connect()
+#     if r is not None:
+#         break
+#     else:
+#         print("No MUSE found, trying again...")
+#         continue
 
-batt = muse.pullBattery()
-print('Muse Battery is ' + str(batt))
+# batt = muse.pullBattery()
+# print('Muse Battery is ' + str(batt))
 plt.interactive(False)
 
 global plotBuffer
