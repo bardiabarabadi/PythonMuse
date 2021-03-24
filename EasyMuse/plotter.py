@@ -4,7 +4,7 @@ from EasyMuse.Muse import Muse
 from EasyMuse.helper import *
 import matplotlib;
 
-# matplotlib.use("TkAgg")
+matplotlib.use("TkAgg")
 
 from EasyMuse.biQuadFilters import *
 
@@ -21,7 +21,6 @@ def updateBuffer():
     if eegData.__len__() > samplingBufferLen:
         print("Warning: Missing samples. Increase the sampling buffer length or increase the plot update frequency")
     eegData = np.array(eegData)
-    print (eegData.shape)
     eegTimeStamp = eegData[:, 5]
     eegData = eegData[:, 0:4]
 
@@ -105,14 +104,14 @@ def close_handle(evt):
 # museName = 'Muse-C3DD'
 museName = 'Muse-3BEA'
 
-plotWhat = 1
+plotWhat = 3
 plotLength = 512  # denominated in samples
-samplingBufferLen = 16  # number of samples to be held between two plot updates
-plotUpdateInterval = 32  # in milliseconds
+samplingBufferLen = 512  # number of samples to be held between two plot updates
+plotUpdateInterval = 200  # in milliseconds
 
 sampleRate = 256
 bandwidth = 0.707
-whichFilters = [1, 0, 1]
+whichFilters = [1, 1, 1]
 
 # Create empty arrays
 global previousSamples, previousResults
