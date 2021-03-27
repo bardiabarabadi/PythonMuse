@@ -18,12 +18,24 @@ from scipy.signal import butter, lfilter, freqz
 def butter_lowpass(cutoff, fs, order=5):
     nyq = 0.5 * fs
     normal_cutoff = cutoff / nyq
-    b, a = butter(order, normal_cutoff, btype='high', analog=False)
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
     return b, a
 
 
 def butter_lowpass_filter(data, cutoff, fs, order=5):
     b, a = butter_lowpass(cutoff, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+
+def butter_highpass(cutoff, fs, order=5):
+    nyq = 0.5 * fs
+    normal_cutoff = cutoff / nyq
+    b, a = butter(order, normal_cutoff, btype='high', analog=False)
+    return b, a
+
+
+def butter_highpass_filter(data, cutoff, fs, order=5):
+    b, a = butter_highpass(cutoff, fs, order=order)
     y = lfilter(b, a, data)
     return y
 
@@ -76,13 +88,19 @@ for i in range(1, 100):
     plotX = plotX[-plotLength:]
     plotBuffer = plotBuffer[-plotLength:, :]
 
+raw = plotBuffer[:, 1]
 fft_raw = np.abs(np.fft.fft(plotBuffer[:, 1]))
+
 fft_raw[0] = 0
 
-y = butter_lowpass_filter(plotBuffer[:,1], 0.1,fs=sampleRate)
+y = butter_lowpass_filter(plotBuffer[:,1], 30,fs=sampleRate)
+z = butter_highpass_filter(y, 0.1,fs=sampleRate)
 fft_y = np.abs(np.fft.fft(y))
 fft_y[0] = 0
-plt.plot(plotX, fft_raw,
-         plotX, fft_y)
+
+fig, axs = plt.subplots(3)
+axs[0].plot(plotX, raw)
+axs[1].plot(plotX, y)
+axs[2].plot(plotX, z)
 plt.show()
 
