@@ -6,64 +6,19 @@ import matplotlib;
 
 matplotlib.use("TkAgg")
 
-# from EasyMuse.biQuadFilters import *
 from EasyMuse.butterFilters import *
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 
-def updateBuffer():
-    global plotX
-    global plotBuffer
-    global previousSamples, previousResults
-    global eegData
-    # start_buffering_and_filtering_time = time.time()
-    fifo_offset = int(eegData.shape[0] / 4)
-
-    # if eegData.__len__() > samplingBufferLen:
-    #     print("Warning: Missing samples. Increase the sampling buffer length or increase the plot update frequency")
-
-    eegData_new = muse.pullEEG()  # Only the first four elements of every list member is valuable
-    new_samples_count = eegData_new.__len__()
-    # print('len: ' + str(new_samples_count))
-    if new_samples_count == 0:
-        return
-    if new_samples_count > fifo_offset * 3 - 1:
-        print("Got too man samples. Trimming " + str(new_samples_count - fifo_offset * 3) + " samples...")
-        eegData_new = eegData_new[:fifo_offset * 3 - 1]
-        new_samples_count = fifo_offset * 3 - 1
-
-    eegData_new = np.array(eegData_new)
-    t = (eegData_new[:, 5] < 100)
-    a = [i for i, x in enumerate(t) if x]
-    eegData_new = np.delete(eegData_new, a, axis=0)
-    eegData = np.roll(eegData, -new_samples_count, axis=0)
-    eegData[-new_samples_count:, :] = eegData_new
-
-    eegData_filtered_t = eegData
-    # Filtering
-    # start_filtering_time = time.time()
-    eegData_filtered_t[:, 0:4] = applyButter(eegData[:, 0:4], whichFilters, highPass, lowPass, notchFilter)
-    # end_filtering_time = time.time()
-    # print ("Elapsed Filtering: " + str(end_filtering_time - start_filtering_time))
-
-    eegData[:, 0:4] = eegData_filtered_t[:, 0:4]
-    plotX = np.roll(plotX, -new_samples_count)
-    plotX[-new_samples_count:, 0] = eegData_filtered_t[-fifo_offset - new_samples_count:-fifo_offset, 5]
-
-    plotBuffer = np.roll(plotBuffer, -new_samples_count, axis=0)
-    plotBuffer[-new_samples_count:, 0:4] = eegData_filtered_t[-fifo_offset - new_samples_count:-fifo_offset, 0:4]
-
-    # end_buffering_and_filtering_time = time.time()
-    # print ("Elapsed buffering and filtering time: " + str(end_buffering_and_filtering_time-start_buffering_and_filtering_time))
-
-
 def animateEEG(i):
     global plotX
     global plotBuffer
+    global eegData
 
-    updateBuffer()
+    plotX, plotBuffer, eegData = updateBuffer(plotX, plotBuffer, eegData, muse, whichFilters, highPass, lowPass,
+                                              notchFilter)
 
     ax1.clear()
     ax2.clear()
@@ -83,8 +38,10 @@ def animateEEG(i):
 def animateFFT(i):
     global plotX
     global plotBuffer
+    global eegData
 
-    updateBuffer()
+    plotX, plotBuffer, eegData = updateBuffer(plotX, plotBuffer, eegData, muse, whichFilters, highPass, lowPass,
+                                              notchFilter)
     fftCoefficients = doMuseFFT(toFFT=plotBuffer, sRate=sampleRate)
     ax1.clear()
     ax2.clear()
@@ -105,8 +62,10 @@ def animateFFT(i):
 def animateWavelet(i):
     global plotX
     global plotBuffer
+    global eegData
 
-    updateBuffer()
+    plotX, plotBuffer, eegData = updateBuffer(plotX, plotBuffer, eegData, muse, whichFilters, highPass, lowPass,
+                                              notchFilter)
     wavelet = doMuseWavelet(toWavelet=plotBuffer, sRate=sampleRate)
     ax1.clear()
     ax2.clear()
@@ -144,6 +103,8 @@ lowPass = butter_lowpass(lowFreq, sampleRate, order=5)
 
 notchFreq = 60
 notchFilter = iir_notch(notchFreq, sampleRate, Q=30)
+# Quality factor. Dimensionless parameter that characterizes notch filter -3 dB bandwidth
+# relative to its center frequency, ``Q = w0/bw``.
 
 muse = Muse(target_name=museName, max_buff_len=samplingBufferLen)
 for i in range(10):
@@ -166,10 +127,7 @@ eegData = np.zeros([plotLength, 6])
 
 plotBuffer = np.zeros([plotLength, 4])
 plotX = np.zeros([plotLength, 1])
-updateBuffer()
-updateBuffer()
-updateBuffer()
-exit()
+
 fig = plt.figure()
 fig.canvas.mpl_connect('close_event', close_handle)
 ax1 = fig.add_subplot(2, 2, 3)
@@ -188,6 +146,6 @@ if plotWhat == 2:
     plt.show()
 
 if plotWhat == 3:
-    ani = animation.FuncAnimation(fig, animateWavelet, interval=plotUpdateInterval, )
+    ani = animation.FuncAnimation(fig, animateWavelet, interval=plotUpdateInterval)
 
     plt.show()
