@@ -87,10 +87,10 @@ def updateBuffer(plotX, plotBuffer, eegData, muse, whichFilters, highPass, lowPa
     new_samples_count = eegData_new.__len__()
     if new_samples_count == 0:
         return
-    if new_samples_count > fifo_offset * 3 - 1:
-        print("Got too man samples. Trimming " + str(new_samples_count - fifo_offset * 3) + " samples...")
-        eegData_new = eegData_new[:fifo_offset * 3 - 1]
-        new_samples_count = fifo_offset * 3 - 1
+    if new_samples_count > fifo_offset * 2 - 1:
+        print("Got too many samples. Trimming " + str(new_samples_count - fifo_offset * 2) + " samples...")
+        eegData_new = eegData_new[:fifo_offset * 2 - 1]
+        new_samples_count = fifo_offset * 2 - 1
 
     eegData_new = np.array(eegData_new)
     t = (eegData_new[:, 5] < 100)

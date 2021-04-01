@@ -29,4 +29,4 @@ def applyButter(sample, whichFilters, highPass, lowPass, notchFilter):
     if whichFilters[2] == 1:
         filtered = lfilter(highPass[0], highPass[1], filtered)
 
-    return sample
+    return filtered
