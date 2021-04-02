@@ -20,13 +20,14 @@ def iir_notch(notch_freq, fs, Q=30):
     return b, a
 
 
-def applyButter(sample, whichFilters, highPass, lowPass, notchFilter):
+def applyButter(sample, highPass, lowPass, notchFilter):
     filtered = sample
-    if whichFilters[0] == 1:  # Low pass
-        filtered = lfilter(lowPass[0], lowPass[1], filtered)
-    if whichFilters[1] == 1:
-        filtered = lfilter(notchFilter[0], notchFilter[1], filtered)
-    if whichFilters[2] == 1:
-        filtered = lfilter(highPass[0], highPass[1], filtered)
+    for channel in range(sample.shape[1]):
+        if lowPass is not None:  # Low pass
+            filtered[:, channel] = lfilter(lowPass[0], lowPass[1], filtered[:, channel])
+        if highPass is not None:
+            filtered[:, channel] = lfilter(notchFilter[0], notchFilter[1], filtered[:, channel])
+        if notchFilter is not None:
+            filtered[:, channel] = lfilter(highPass[0], highPass[1], filtered[:, channel])
 
     return filtered

@@ -80,34 +80,3 @@ def doMuseWavelet(toWavelet, sRate):
     return waveletData
 
 
-def updateBuffer(plotX, plotBuffer, eegData, muse, whichFilters, highPass, lowPass, notchFilter):
-    fifo_offset = int(eegData.shape[0] / 4)
-
-    eegData_new = muse.pullEEG()
-    new_samples_count = eegData_new.__len__()
-    if new_samples_count == 0:
-        return
-    if new_samples_count > fifo_offset * 2 - 1:
-        print("Got too many samples. Trimming " + str(new_samples_count - fifo_offset * 2) + " samples...")
-        eegData_new = eegData_new[:fifo_offset * 2 - 1]
-        new_samples_count = fifo_offset * 2 - 1
-
-    eegData_new = np.array(eegData_new)
-    t = (eegData_new[:, 5] < 100)
-    a = [i for i, x in enumerate(t) if x]
-    eegData_new = np.delete(eegData_new, a, axis=0)
-    eegData = np.roll(eegData, -new_samples_count, axis=0)
-    eegData[-new_samples_count:, :] = eegData_new
-
-    eegData_filtered_t = eegData
-    # Filtering
-    eegData_filtered_t[:, 0:4] = applyButter(eegData[:, 0:4], whichFilters, highPass, lowPass, notchFilter)
-
-    eegData[:, 0:4] = eegData_filtered_t[:, 0:4]
-    plotX = np.roll(plotX, -new_samples_count)
-    plotX[-new_samples_count:, 0] = eegData_filtered_t[-fifo_offset - new_samples_count:-fifo_offset, 5]
-
-    plotBuffer = np.roll(plotBuffer, -new_samples_count, axis=0)
-    plotBuffer[-new_samples_count:, 0:4] = eegData_filtered_t[-fifo_offset - new_samples_count:-fifo_offset, 0:4]
-
-    return plotX, plotBuffer, eegData

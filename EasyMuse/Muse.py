@@ -13,7 +13,12 @@ class Muse:
                  loop=None,
                  target_name=None,  # Should be a string containing four digits/letters
                  timeout=10,
-                 max_buff_len=2 * 256  # Set this to be the maximum number of samples to keep
+                 plotLength=512,
+                 sampleRate=256,
+                 highPassFreq=-1,  # -1 indicates that this filter will not be used
+                 lowPassFreq=-1,
+                 notchFreq=-1,
+                 filterOrder=5
                  ):
         self.all_muses = []
         self.target_name = target_name
@@ -25,17 +30,35 @@ class Muse:
         self.ppg_buff = []
         self.acc_buff = []
         self.gyro_buff = []
-        self.max_buff_len = max_buff_len
+        self.max_buff_len = plotLength
         if loop is None:
             self.loop = asyncio.get_event_loop()
         else:
             self.loop = loop
         self.recv_command = None
+        self.plotLength = plotLength
+        self.sampleRate = sampleRate
+
+        self.highPassFreq = highPassFreq
+        self.lowPassFreq = lowPassFreq
+        self.notchFreq = notchFreq
+        self.filterOrder = filterOrder
+
+        self.highPassFilter = None
+        self.lowPassFilter = None
+        self.notchFilter = None
+
+        self.makeFilters()
+
+        self.eegData = np.zeros([plotLength, 6])
+        self.plotBuffer = np.zeros([plotLength, 4])
+        self.plotX = np.zeros([plotLength, 1])
+
+        self.fifo_offset = int(plotLength / 4)
 
     def disconnect(self):
         self.loop.run_until_complete(self.muse.disconnect())
         self.loop.run_until_complete(self.muse.disconnect())
-
 
     def connect(self, target_name=None):
 
@@ -74,7 +97,7 @@ class Muse:
         try:
             self.loop.run_until_complete(self.muse.connect(timeout=30))
         except asyncio.exceptions.TimeoutError:
-            print ("30 second time out reached, cannot connect to MUSE! Ty again...")
+            print("30 second time out reached, cannot connect to MUSE! Ty again...")
             return None
         print("connection was successful")
         _ = self.pullACC()
@@ -160,3 +183,55 @@ class Muse:
             return -1
         else:
             return self.recv_command['bp']
+
+    def makeFilters(self):
+        if self.highPassFreq > 0:
+            self.highPassFilter = butter_highpass(self.highPassFreq, self.sampleRate, self.filterOrder)
+        if self.lowPassFreq > 0:
+            self.lowPassFilter = butter_lowpass(self.lowPassFreq, self.sampleRate, self.filterOrder)
+        if self.notchFreq > 0:
+            self.notchFilter = iir_notch(self.notchFreq, self.sampleRate, 30)
+            # Quality factor. Dimensionless parameter that characterizes notch filter -3 dB bandwidth
+            # relative to its center frequency, ``Q = w0/bw``.
+
+    def updateBuffer(self):
+        eegData_new = self.pullEEG()
+        new_samples_count = eegData_new.__len__()
+        if new_samples_count == 0:
+            return
+        if new_samples_count > self.fifo_offset * 2 - 1:
+            print("Got too many samples. Trimming " + str(new_samples_count - self.fifo_offset * 2) + " samples...")
+            eegData_new = eegData_new[:self.fifo_offset * 2 - 1]
+            new_samples_count = self.fifo_offset * 2 - 1
+
+        eegData_new = np.array(eegData_new)
+        t = (eegData_new[:, 5] < 100)
+        a = [i for i, x in enumerate(t) if x]
+        eegData_new = np.delete(eegData_new, a, axis=0)
+        self.eegData = np.roll(self.eegData, -new_samples_count, axis=0)
+        self.eegData[-new_samples_count:, :] = eegData_new
+
+        eegData_filtered_t = self.eegData
+        # Filtering
+        eegData_filtered_t[:, 0:4] = applyButter(self.eegData[:, 0:4], self.highPassFilter, self.lowPassFilter,
+                                                 self.notchFilter)
+
+        self.eegData[:, 0:4] = eegData_filtered_t[:, 0:4]
+        self.plotX = np.roll(self.plotX, -new_samples_count)
+        self.plotX[-new_samples_count:, 0] = eegData_filtered_t[
+                                             -self.fifo_offset - new_samples_count: -self.fifo_offset, 5]
+
+        self.plotBuffer = np.roll(self.plotBuffer, -new_samples_count, axis=0)
+        self.plotBuffer[-new_samples_count:, 0:4] = eegData_filtered_t[
+                                                    -self.fifo_offset - new_samples_count:-self.fifo_offset, 0:4]
+
+    def getPlot(self):
+        return self.plotX, self.plotBuffer
+
+    def getPlotFFT(self):
+        fftCoefficients = doMuseFFT(toFFT=self.plotBuffer, sRate=self.sampleRate)
+        fftFrequencies = np.arange(1, fftCoefficients.shape[0] + 1, 1)
+        return fftFrequencies, fftCoefficients
+
+    def getPlotWavelet(self):
+        return doMuseWavelet(toWavelet=self.plotBuffer, sRate=self.sampleRate)
