@@ -13,7 +13,7 @@ def is_data_valid(data, timestamps):
 
 
 def PPG_error(Exceptions):
-    pass
+    pass # Not implemented yet
 
 
 def doMuseFFT(toFFT, sRate):
