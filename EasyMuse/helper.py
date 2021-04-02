@@ -35,10 +35,7 @@ def doMuseFFT(toFFT, sRate):
     return coefficients
 
 
-def doMuseWavelet(toWavelet, sRate):
-    minimumFrequency = 1
-    maximumFrequency = 30
-    frequencySteps = 60
+def doMuseWavelet(toWavelet, sRate, frequencySteps, minimumFrequency, maximumFrequency):
     mortletParameter = [6]
     samplingRate = sRate
 

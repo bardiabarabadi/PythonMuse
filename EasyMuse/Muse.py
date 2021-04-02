@@ -10,15 +10,15 @@ from functools import partial
 class Muse:
 
     def __init__(self,
-                 loop=None,
+                 loop=None,  # the current eventloop. Only use if using Kivy GUI
                  target_name=None,  # Should be a string containing four digits/letters
-                 timeout=10,
-                 plotLength=512,
-                 sampleRate=256,
+                 timeout=10,  # Connection (and search) timeout
+                 plotLength=512,  # length of the plot (horizantal, in samples)
+                 sampleRate=256,  # Sample rate
                  highPassFreq=-1,  # -1 indicates that this filter will not be used
-                 lowPassFreq=-1,
-                 notchFreq=-1,
-                 filterOrder=5
+                 lowPassFreq=-1,  # -1 indicates that this filter will not be used
+                 notchFreq=-1,  # -1 indicates that this filter will not be used
+                 filterOrder=5  # Butterworth Filter order for low/high pass filters
                  ):
         self.all_muses = []
         self.target_name = target_name
@@ -184,54 +184,56 @@ class Muse:
         else:
             return self.recv_command['bp']
 
-    def makeFilters(self):
-        if self.highPassFreq > 0:
+    def makeFilters(self):  # set up the filters is selected by the user
+        if self.highPassFreq > 0:  # only if the frequency is positive
             self.highPassFilter = butter_highpass(self.highPassFreq, self.sampleRate, self.filterOrder)
-        if self.lowPassFreq > 0:
+        if self.lowPassFreq > 0:  # only if the frequency is positive
             self.lowPassFilter = butter_lowpass(self.lowPassFreq, self.sampleRate, self.filterOrder)
-        if self.notchFreq > 0:
-            self.notchFilter = iir_notch(self.notchFreq, self.sampleRate, 30)
-            # Quality factor. Dimensionless parameter that characterizes notch filter -3 dB bandwidth
+        if self.notchFreq > 0:  # only if the frequency is positive
+            self.notchFilter = iir_notch(self.notchFreq, self.sampleRate, Q=30)
+            # Q=Quality factor. Dimensionless parameter that characterizes notch filter -3 dB bandwidth
             # relative to its center frequency, ``Q = w0/bw``.
 
     def updateBuffer(self):
-        eegData_new = self.pullEEG()
-        new_samples_count = eegData_new.__len__()
-        if new_samples_count == 0:
+        eegData_new = self.pullEEG()  # Pull new samples from MUSE
+        new_samples_count = eegData_new.__len__()  # Get the number of new samples received
+        if new_samples_count == 0:  # return if no new samples received
             return
-        if new_samples_count > self.fifo_offset * 2 - 1:
+        if new_samples_count > self.fifo_offset * 2 - 1:  # If received samples count is greater than maximum allowed
             print("Got too many samples. Trimming " + str(new_samples_count - self.fifo_offset * 2) + " samples...")
-            eegData_new = eegData_new[:self.fifo_offset * 2 - 1]
-            new_samples_count = self.fifo_offset * 2 - 1
+            eegData_new = eegData_new[:self.fifo_offset * 2 - 1]  # trim extra samples
+            new_samples_count = self.fifo_offset * 2 - 1  # update the new sample count (post-trimming)
 
-        eegData_new = np.array(eegData_new)
-        t = (eegData_new[:, 5] < 100)
-        a = [i for i, x in enumerate(t) if x]
-        eegData_new = np.delete(eegData_new, a, axis=0)
-        self.eegData = np.roll(self.eegData, -new_samples_count, axis=0)
-        self.eegData[-new_samples_count:, :] = eegData_new
+        eegData_new = np.array(eegData_new)  # cast list to np.array
+        t = (eegData_new[:, 5] < 100)  # Find invalid samples (if timestamp is too small, should be a very large number)
+        a = [i for i, x in enumerate(t) if x]  # find invalid samples' indices
+        eegData_new = np.delete(eegData_new, a, axis=0)  # remove the invalid samples
+        # FIFO implementation
+        self.eegData = np.roll(self.eegData, -new_samples_count,
+                               axis=0)  # roll over the old eegData to make room for the new samples
+        self.eegData[-new_samples_count:, :] = eegData_new # Fill in the FIFO with new samples
 
-        eegData_filtered_t = self.eegData
+        eegData_filtered_t = self.eegData # Initiate filtering
         # Filtering
         eegData_filtered_t[:, 0:4] = applyButter(self.eegData[:, 0:4], self.highPassFilter, self.lowPassFilter,
-                                                 self.notchFilter)
+                                                 self.notchFilter) # See function implementation for more details
 
-        self.eegData[:, 0:4] = eegData_filtered_t[:, 0:4]
-        self.plotX = np.roll(self.plotX, -new_samples_count)
-        self.plotX[-new_samples_count:, 0] = eegData_filtered_t[
+        self.plotX = np.roll(self.plotX, -new_samples_count) # roll thw timestamps to make room for new samples (FIFO)
+        self.plotX[-new_samples_count:, 0] = eegData_filtered_t[ # Append new timestamps (from the middle of the FIFO)
                                              -self.fifo_offset - new_samples_count: -self.fifo_offset, 5]
 
-        self.plotBuffer = np.roll(self.plotBuffer, -new_samples_count, axis=0)
-        self.plotBuffer[-new_samples_count:, 0:4] = eegData_filtered_t[
+        self.plotBuffer = np.roll(self.plotBuffer, -new_samples_count, axis=0) # Roll the output (filtered) fifo
+        self.plotBuffer[-new_samples_count:, 0:4] = eegData_filtered_t[ # Append new samples (filtered) to the FIFO
                                                     -self.fifo_offset - new_samples_count:-self.fifo_offset, 0:4]
 
     def getPlot(self):
-        return self.plotX, self.plotBuffer
+        return self.plotX, self.plotBuffer # return time stamps and filtered samples.
 
     def getPlotFFT(self):
-        fftCoefficients = doMuseFFT(toFFT=self.plotBuffer, sRate=self.sampleRate)
-        fftFrequencies = np.arange(1, fftCoefficients.shape[0] + 1, 1)
+        fftCoefficients = doMuseFFT(toFFT=self.plotBuffer, sRate=self.sampleRate) # Perform FFT on the samples
+        fftFrequencies = np.arange(1, fftCoefficients.shape[0] + 1, 1) # X-axis values for the FFT bar chart
         return fftFrequencies, fftCoefficients
 
-    def getPlotWavelet(self):
-        return doMuseWavelet(toWavelet=self.plotBuffer, sRate=self.sampleRate)
+    def getPlotWavelet(self, frequencySteps=60, minimumFrequency=1, maximumFrequency=30):
+        return doMuseWavelet(toWavelet=self.plotBuffer, sRate=self.sampleRate, frequencySteps=frequencySteps,
+                             minimumFrequency=minimumFrequency, maximumFrequency=maximumFrequency)
