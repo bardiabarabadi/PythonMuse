@@ -1,6 +1,7 @@
 from bleak import discover
 from .constants import *
 
+
 class MuseFinder(object):
 
     def __init__(self,

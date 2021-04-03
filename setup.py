@@ -14,7 +14,7 @@ def get_long_description():
 
 def copy_docs():
     return  # TODO
-    docs_dir = "EasyMuse/docs"
+    docs_dir = "pythonMuse/docs"
     if not os.path.exists(docs_dir):
         os.makedirs(docs_dir)
 
@@ -26,18 +26,18 @@ copy_docs()
 long_description = get_long_description()
 
 setup(
-    name="EasyMuse",
+    name="pythonMuse",
     version="0.2.0",
     description="A Python library for connecting and communicate with MUSE headbands. "
                 "Uses Bleak as the underlying Bluetooth interface.",
     keywords="muse lsl eeg ble neuroscience matlab UDP",
-    url="https://github.com/bardiabarabadi/EasyMuse",
+    url="https://github.com/bardiabarabadi/PythonMuse",
     author="Bardia Barabadi",
     author_email="bardiabarabadi@uvic.ca",
     license="MIT",
     entry_points={},
-    packages=['EasyMuse'],
-    package_data={},  # {'EasyMuse': ['docs/Pic.png']},
+    packages=['pythonMuse'],
+    package_data={},  # {'pythonMuse': ['docs/Pic.png']},
     include_package_data=True,
     zip_safe=False,
     long_description=long_description,
@@ -52,6 +52,7 @@ setup(
         "pyserial",
         "esptool",
         "nest_asyncio",
+        "scipy"
     ]
     ,
     classifiers=[

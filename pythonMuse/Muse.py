@@ -211,27 +211,27 @@ class Muse:
         # FIFO implementation
         self.eegData = np.roll(self.eegData, -new_samples_count,
                                axis=0)  # roll over the old eegData to make room for the new samples
-        self.eegData[-new_samples_count:, :] = eegData_new # Fill in the FIFO with new samples
+        self.eegData[-new_samples_count:, :] = eegData_new  # Fill in the FIFO with new samples
 
-        eegData_filtered_t = self.eegData # Initiate filtering
+        eegData_filtered_t = self.eegData  # Initiate filtering
         # Filtering
         eegData_filtered_t[:, 0:4] = applyButter(self.eegData[:, 0:4], self.highPassFilter, self.lowPassFilter,
-                                                 self.notchFilter) # See function implementation for more details
+                                                 self.notchFilter)  # See function implementation for more details
 
-        self.plotX = np.roll(self.plotX, -new_samples_count) # roll thw timestamps to make room for new samples (FIFO)
-        self.plotX[-new_samples_count:, 0] = eegData_filtered_t[ # Append new timestamps (from the middle of the FIFO)
+        self.plotX = np.roll(self.plotX, -new_samples_count)  # roll thw timestamps to make room for new samples (FIFO)
+        self.plotX[-new_samples_count:, 0] = eegData_filtered_t[  # Append new timestamps (from the middle of the FIFO)
                                              -self.fifo_offset - new_samples_count: -self.fifo_offset, 5]
 
-        self.plotBuffer = np.roll(self.plotBuffer, -new_samples_count, axis=0) # Roll the output (filtered) fifo
-        self.plotBuffer[-new_samples_count:, 0:4] = eegData_filtered_t[ # Append new samples (filtered) to the FIFO
+        self.plotBuffer = np.roll(self.plotBuffer, -new_samples_count, axis=0)  # Roll the output (filtered) fifo
+        self.plotBuffer[-new_samples_count:, 0:4] = eegData_filtered_t[  # Append new samples (filtered) to the FIFO
                                                     -self.fifo_offset - new_samples_count:-self.fifo_offset, 0:4]
 
     def getPlot(self):
-        return self.plotX, self.plotBuffer # return time stamps and filtered samples.
+        return self.plotX, self.plotBuffer  # return time stamps and filtered samples.
 
     def getPlotFFT(self):
-        fftCoefficients = doMuseFFT(toFFT=self.plotBuffer, sRate=self.sampleRate) # Perform FFT on the samples
-        fftFrequencies = np.arange(1, fftCoefficients.shape[0] + 1, 1) # X-axis values for the FFT bar chart
+        fftCoefficients = doMuseFFT(toFFT=self.plotBuffer, sRate=self.sampleRate)  # Perform FFT on the samples
+        fftFrequencies = np.arange(1, fftCoefficients.shape[0] + 1, 1)  # X-axis values for the FFT bar chart
         return fftFrequencies, fftCoefficients
 
     def getPlotWavelet(self, frequencySteps=60, minimumFrequency=1, maximumFrequency=30):

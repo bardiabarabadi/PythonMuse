@@ -22,11 +22,11 @@ def iir_notch(notch_freq, fs, Q=30):
 
 def applyButter(sample, highPass, lowPass, notchFilter):
     filtered = sample
-    for channel in range(sample.shape[1]): # For each EEG channel
+    for channel in range(sample.shape[1]):  # For each EEG channel
         if lowPass is not None:  # Filter only if the filter is selected by the user
             filtered[:, channel] = lfilter(lowPass[0], lowPass[1], filtered[:, channel])
-        if highPass is not None: # Filter only if the filter is selected by the user
+        if highPass is not None:  # Filter only if the filter is selected by the user
             filtered[:, channel] = lfilter(notchFilter[0], notchFilter[1], filtered[:, channel])
-        if notchFilter is not None: # Filter only if the filter is selected by the user
+        if notchFilter is not None:  # Filter only if the filter is selected by the user
             filtered[:, channel] = lfilter(highPass[0], highPass[1], filtered[:, channel])
     return filtered

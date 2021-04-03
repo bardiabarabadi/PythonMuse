@@ -1,8 +1,6 @@
 import numpy as np
 from scipy import fft as spfft
 
-from EasyMuse.butterFilters import *
-
 
 def is_data_valid(data, timestamps):
     if timestamps == 0.0:
@@ -13,7 +11,7 @@ def is_data_valid(data, timestamps):
 
 
 def PPG_error(Exceptions):
-    pass # Not implemented yet
+    pass  # Not implemented yet
 
 
 def doMuseFFT(toFFT, sRate):
@@ -75,5 +73,3 @@ def doMuseWavelet(toWavelet, sRate, frequencySteps, minimumFrequency, maximumFre
 
         waveletData[channelCounter, :, :] = timeFrequencyData.T
     return waveletData
-
-

@@ -1,4 +1,4 @@
-from EasyMuse.Muse import Muse
+from pythonMuse.Muse import Muse
 import matplotlib;
 
 matplotlib.use("TkAgg")  # This option may or may not be needed according to your OS and Python setup (Ipython...)

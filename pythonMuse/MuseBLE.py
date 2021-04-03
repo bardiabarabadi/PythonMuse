@@ -1,4 +1,3 @@
-
 import bitstring
 from bleak import BleakClient
 import json
@@ -7,6 +6,7 @@ import numpy as np
 from time import time
 import asyncio
 from .constants import *
+
 
 def ppg_error():
     print("PPG is only available on MUSE v2")
@@ -73,7 +73,6 @@ class MuseBLE(object):
     async def disconnect(self):
         # Disconnects from the MUSE, returns success
         await self.client.disconnect()
-
 
     async def ask_control(self):
         """Send a message to Muse to ask for the control status.
