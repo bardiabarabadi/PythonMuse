@@ -5,21 +5,20 @@ import os, platform
 
 def get_long_description():
     return ""
-    pass  # TODO
-    this_directory = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(this_directory, 'docs/README.md')) as f:
-        long_description = f.read()
-        return long_description
+    # this_directory = os.path.abspath(os.path.dirname(__file__))
+    # with open(os.path.join(this_directory, 'docs/README.md')) as f:
+    #     long_description = f.read()
+    #     return long_description
 
 
 def copy_docs():
-    return  # TODO
-    docs_dir = "pythonMuse/docs"
-    if not os.path.exists(docs_dir):
-        os.makedirs(docs_dir)
-
-    copyfile("docs/Header.png", docs_dir + "/Header.png")
-    copyfile("docs/README.md", docs_dir + "/README.md")
+    return
+    # docs_dir = "pythonMuse/docs"
+    # if not os.path.exists(docs_dir):
+    #     os.makedirs(docs_dir)
+    #
+    # copyfile("docs/Header.png", docs_dir + "/Header.png")
+    # copyfile("docs/README.md", docs_dir + "/README.md")
 
 
 copy_docs()
@@ -27,7 +26,7 @@ long_description = get_long_description()
 
 setup(
     name="pythonMuse",
-    version="0.2.0",
+    version="1.0.0",
     description="A Python library for connecting and communicate with MUSE headbands. "
                 "Uses Bleak as the underlying Bluetooth interface.",
     keywords="muse lsl eeg ble neuroscience matlab UDP",
@@ -37,7 +36,7 @@ setup(
     license="MIT",
     entry_points={},
     packages=['pythonMuse'],
-    package_data={},  # {'pythonMuse': ['docs/Pic.png']},
+    package_data={},
     include_package_data=True,
     zip_safe=False,
     long_description=long_description,

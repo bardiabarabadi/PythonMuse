@@ -1,10 +1,12 @@
-import bitstring
-from bleak import BleakClient
-import json
-from bleak.exc import BleakError
-import numpy as np
-from time import time
 import asyncio
+import json
+from time import time
+
+import bitstring
+import numpy as np
+from bleak import BleakClient
+from bleak.exc import BleakError
+
 from .constants import *
 
 

@@ -1,10 +1,10 @@
+from functools import partial
+
 from .MuseBLE import *
 from .MuseFinder import *
-from .helper import *
+from .butterFilters import *
 from .constants import *
-
-import asyncio
-from functools import partial
+from .helper import *
 
 
 class Muse:
