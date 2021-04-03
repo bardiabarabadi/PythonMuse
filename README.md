@@ -1,7 +1,7 @@
-# EasyMuse
+# PythonMuse
 
 Install EasyMuse using:
-  `pip install easymuse==0.2.0`
+  `pip install pythonmuse==0.2.0`
   
 See `examples.py` to get an idea of to use this library. Make sure you change the muse name (line 86 of `examples.py`) before running the code.
 
